@@ -1,0 +1,85 @@
+const mongoose = require("mongoose");
+
+mongoose.connect("mongodb://127.0.0.1:27017/ecommerce_catalog", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log(" Connected to MongoDB"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
+
+// Schema for product variants
+const variantSchema = new mongoose.Schema({
+  color: String,
+  size: String,
+  stock: Number,
+});
+
+// Schema for products (with nested variants)
+const productSchema = new mongoose.Schema({
+  name: String,
+  price: Number,
+  category: String,
+  variants: [variantSchema],
+});
+
+// Model
+const Product = mongoose.model("Product", productSchema);
+
+// Insert sample data
+async function insertSampleData() {
+  await Product.deleteMany({}); // clear previous data
+
+  const products = [
+    {
+      name: "T-Shirt",
+      price: 499,
+      category: "Clothing",
+      variants: [
+        { color: "Red", size: "M", stock: 25 },
+        { color: "Blue", size: "L", stock: 10 },
+      ],
+    },
+    {
+      name: "Sneakers",
+      price: 2499,
+      category: "Footwear",
+      variants: [
+        { color: "White", size: "8", stock: 7 },
+        { color: "Black", size: "9", stock: 12 },
+      ],
+    },
+    {
+      name: "Smartwatch",
+      price: 3999,
+      category: "Electronics",
+      variants: [
+        { color: "Black", size: "Standard", stock: 8 },
+        { color: "Silver", size: "Standard", stock: 5 },
+      ],
+    },
+  ];
+
+  await Product.insertMany(products);
+  console.log("Sample products inserted successfully");
+}
+
+// Run some MongoDB queries
+async function runQueries() {
+  console.log("\n All Products:");
+  console.log(await Product.find());
+
+  console.log("\n Products in category 'Clothing':");
+  console.log(await Product.find({ category: "Clothing" }));
+
+  console.log("\n Projecting only variant color and stock:");
+  console.log(await Product.find({}, { name: 1, "variants.color": 1, "variants.stock": 1 }));
+}
+
+// Execute everything
+async function run() {
+  await insertSampleData();
+  await runQueries();
+  mongoose.connection.close();
+}
+
+run();
